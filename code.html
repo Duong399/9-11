@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>9/11 Game</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+        canvas {
+            border: 1px solid black;
+            background: url('background.jpeg') no-repeat center center;
+            background-size: 100% 100%;
+            width: 1000px;
+            height: 300px;
+        }
+        .game-over {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: url('end.gif') no-repeat center center;
+            background-size: cover;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+        .restart-button {
+            padding: 10px 20px;
+            font-size: 20px;
+            cursor: pointer;
+            background-color: red;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>9/11 Game</h1>
+    <p>Score: <span id="score">0</span></p>
+    <canvas id="gameCanvas" width="1000" height="300"></canvas>
+    <div class="game-over" id="gameOverScreen">
+        <button class="restart-button" onclick="location.reload()">Chơi lại</button>
+    </div>
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+        const scoreDisplay = document.getElementById("score");
+        const gameOverScreen = document.getElementById("gameOverScreen");
+
+        const dinoImg = new Image();
+        dinoImg.src = "may-bay.png";
+        
+        const obstacleImg = new Image();
+        obstacleImg.src = "thap-doi.png";
+
+        let dino = { x: 50, y: 235, width: 100, height: 35, dy: 0, gravity: 0.4, jumpPower: -13, onGround: false };
+        let obstacle = { x: 1000, y: 166, width: 50, height: 115, speed: 5 };
+        let gameRunning = true;
+        let score = 0;
+        let scoreRate = 100;
+        let speedIncreaseRate = 0.01;
+        let gravityIncreaseRate = 0.0005;
+
+        function drawDino() {
+            ctx.drawImage(dinoImg, dino.x, dino.y, dino.width, dino.height);
+        }
+
+        function drawObstacle() {
+            ctx.drawImage(obstacleImg, obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+        }
+
+        function update() {
+            if (!gameRunning) return;
+            
+            dino.y += dino.dy;
+            dino.dy += dino.gravity;
+            if (dino.y >= 235) {
+                dino.y = 235;
+                dino.dy = 0;
+                dino.onGround = true;
+            }
+            
+            obstacle.x -= obstacle.speed;
+            if (obstacle.x < -obstacle.width) {
+                obstacle.x = canvas.width;
+            }
+            
+            if (
+                dino.x < obstacle.x + obstacle.width &&
+                dino.x + dino.width > obstacle.x &&
+                dino.y < obstacle.y + obstacle.height &&
+                dino.y + dino.height > obstacle.y
+            ) {
+                gameRunning = false;
+                gameOverScreen.style.display = "flex";
+            }
+        }
+
+        function jump() {
+            if (dino.onGround) {
+                dino.dy = dino.jumpPower;
+                dino.onGround = false;
+            }
+        }
+        
+        document.addEventListener("keydown", function(event) {
+            if (event.code === "Space") {
+                jump();
+            }
+        });
+
+        function increaseScore() {
+            if (!gameRunning) return;
+            score++;
+            scoreDisplay.textContent = score;
+            obstacle.speed += speedIncreaseRate;
+            dino.gravity += gravityIncreaseRate;
+            setTimeout(increaseScore, scoreRate);
+        }
+
+        function gameLoop() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawDino();
+            drawObstacle();
+            update();
+            requestAnimationFrame(gameLoop);
+        }
+
+        gameLoop();
+        increaseScore();
+    </script>
+</body>
+</html>
